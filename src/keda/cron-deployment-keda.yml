@@ -10,6 +10,6 @@ spec:
   - type: cron
     metadata:
       timezone: America/Sao_Paulo
-      start: 55 23 * * *
-      end: 58 23 * * *
+      start: 48 15 * * *
+      end: 51 15 * * *
       desiredReplicas: "8"
