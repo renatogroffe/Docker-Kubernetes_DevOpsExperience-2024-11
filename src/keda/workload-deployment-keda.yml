@@ -1,0 +1,12 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: workload-scaledobject
+spec:
+  scaleTargetRef:
+    name: workertests-workload
+  triggers:
+  - type: kubernetes-workload
+    metadata:
+      podSelector: 'app=workertests-cron'
+      value: '0.5'

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workertests-kind
+spec:
+  selector:
+    matchLabels:
+      app: workertests-kind
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: workertests-kind
+    spec:
+      containers:
+        - name: workertests01
+          image: renatogroffe/workertests-dotnet8:2
+          env:
+          - name: WaitingTimeInSeconds
+            value: "5"

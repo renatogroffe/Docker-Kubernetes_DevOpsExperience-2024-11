@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workertests-workload
+spec:
+  selector:
+    matchLabels:
+      app: workertests-workload
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: workertests-workload
+    spec:
+      containers:
+        - name: workertests-workload
+          image: renatogroffe/workertests-dotnet8:2
