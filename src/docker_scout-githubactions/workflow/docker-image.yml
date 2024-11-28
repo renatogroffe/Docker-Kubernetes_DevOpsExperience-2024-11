@@ -1,0 +1,46 @@
+name: Scan Docker Image
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  DIR_WEBAPP: './src/WorkerContagem'
+  
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build de imagem
+      run: |
+        cd ${{ env.DIR_WEBAPP }}
+        docker build . -t image-to-scan:test --no-cache
+    - name: Login no Docker Hub
+      uses: docker/login-action@v3.3.0
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PAT }}
+    - name: Docker Scout
+      uses: docker/scout-action@v1.15.1
+      with:
+        command: cves
+        image: image-to-scan:test
+        sarif-file: scan-image.sarif
+        exit-code: true
+        only-severities: critical,high
+    - name: Exibir arquivos no diretorio-raiz apos execucao do Docker Scout
+      run: ls
+      if: always()
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: scan-image.sarif
+        category: docker-scout
+      if: always()

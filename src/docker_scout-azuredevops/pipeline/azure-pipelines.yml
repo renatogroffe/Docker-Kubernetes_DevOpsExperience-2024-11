@@ -1,0 +1,50 @@
+# Documentacoes
+# docker scout cves: https://docs.docker.com/reference/cli/docker/scout/cves/
+# Integracao com Azure DevOps
+trigger:
+- main
+
+variables:
+  vmImageName: 'ubuntu-latest'
+  projectDirectory: './src/WorkerContagem/'
+
+stages:
+- stage: ImageScanning
+  displayName: Image Scanning stage
+  variables:
+  - group: docker-scout
+  jobs:
+  - job: ImageScanning
+    displayName: ImageScanning
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - script: |
+        cd $(projectDirectory)
+        docker build . -t image-to-scan-test:$(Build.BuildNumber) --no-cache
+      displayName: Build da imagem para analise
+    - script: |
+        curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
+        docker scout
+      displayName: Instalar Docker Scout CLI
+    - script: |
+        echo $(DOCKER_HUB_USER)
+        echo $(DOCKER_HUB_PAT) | docker login -u $(DOCKER_HUB_USER) --password-stdin
+      displayName: Login no Docker Hub com Personal Access Token
+    - script: |
+        docker scout cves image-to-scan-test:$(Build.BuildNumber) --exit-code --only-severity critical,high
+      displayName: Executar Docker Scout analisando vulnerabilidades e exibindo resultados em tela
+    - script: |
+        docker scout cves --format markdown --output scan-image.md image-to-scan-test:$(Build.BuildNumber) --exit-code --only-severity critical,high
+      displayName: Executar Docker Scout analisando vulnerabilidades (geracao arquivo Markdown)
+      condition: always()
+    - script: |
+        ls
+      displayName: Exibir arquivos no diretorio-raiz apos execucao do Docker Scout
+      condition: always()
+    - task: PublishMarkdownReports@1
+      inputs:
+        contentPath: '$(Build.SourcesDirectory)'
+        indexFile: 'scan-image.md'
+      displayName: Publicacao de relatorio Markdown
+      condition: always()
